@@ -1,1 +1,1 @@
-include ':datetimepicker-sample', ':datetimepicker-library'
+include ':datetimepicker-library'

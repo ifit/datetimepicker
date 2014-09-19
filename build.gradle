@@ -3,14 +3,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12.2'
+        classpath 'com.android.tools.build:gradle:0.12.+'
     }
 }
 
 allprojects {
-    version = VERSION_NAME
-    group = GROUP
-
     repositories {
         mavenCentral()
     }
