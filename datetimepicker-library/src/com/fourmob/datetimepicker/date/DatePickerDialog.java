@@ -1,11 +1,14 @@
 package com.fourmob.datetimepicker.date;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +31,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
 
-public class DatePickerDialog extends DialogFragment implements View.OnClickListener, DatePickerController {
+public class DatePickerDialog extends Dialog implements View.OnClickListener, DatePickerController {
 
     private static final String KEY_SELECTED_YEAR = "year";
     private static final String KEY_SELECTED_MONTH = "month";
@@ -86,6 +89,10 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
     private boolean mVibrate = true;
     private boolean mCloseOnSingleTapDay;
 
+    public DatePickerDialog(Context context) {
+        super(context, R.style.MyCustomDialogFragment);
+    }
+
     private void adjustDayInMonthIfNeeded(int month, int year) {
         int day = mCalendar.get(Calendar.DAY_OF_MONTH);
         int daysInMonth = Utils.getDaysInMonth(month, year);
@@ -94,22 +101,17 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
         }
 	}
 
-    public DatePickerDialog() {
-        // Empty constructor required for dialog fragment. DO NOT REMOVE
-    }
+//	public static DatePickerDialog newInstance(OnDateSetListener onDateSetListener, int year, int month, int day) {
+//		return newInstance(onDateSetListener, year, month, day, true);
+//	}
+//
+//	public static DatePickerDialog newInstance(OnDateSetListener onDateSetListener, int year, int month, int day, boolean vibrate) {
+//		DatePickerDialog datePickerDialog = new DatePickerDialog();
+//		datePickerDialog.initialize(onDateSetListener, year, month, day, vibrate);
+//		return datePickerDialog;
+//	}
 
-	public static DatePickerDialog newInstance(OnDateSetListener onDateSetListener, int year, int month, int day) {
-		return newInstance(onDateSetListener, year, month, day, true);
-	}
-
-	public static DatePickerDialog newInstance(OnDateSetListener onDateSetListener, int year, int month, int day, boolean vibrate) {
-		DatePickerDialog datePickerDialog = new DatePickerDialog();
-		datePickerDialog.initialize(onDateSetListener, year, month, day, vibrate);
-		return datePickerDialog;
-	}
-
-
-	public void setVibrate(boolean vibrate) {
+    public void setVibrate(boolean vibrate) {
 		mVibrate = vibrate;
 	}
 
@@ -134,9 +136,8 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
 				mCurrentView = currentView;
 			}
 			monthDayAnim.start();
-			String monthDayDesc = DateUtils.formatDateTime(getActivity(), timeInMillis, DateUtils.FORMAT_SHOW_DATE);
+			String monthDayDesc = DateUtils.formatDateTime(getContext(), timeInMillis, DateUtils.FORMAT_SHOW_DATE);
 			mAnimator.setContentDescription(mDayPickerDescription + ": " + monthDayDesc);
-            Utils.tryAccessibilityAnnounce(mAnimator, mSelectDay);
             break;
 		case YEAR_VIEW:
 			ObjectAnimator yearAnim = Utils.getPulseAnimator(mYearView, 0.85F, 1.1F);
@@ -154,7 +155,6 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
 			yearAnim.start();
 			String dayDesc = YEAR_FORMAT.format(timeInMillis);
 			mAnimator.setContentDescription(mYearPickerDescription + ": " + dayDesc);
-            Utils.tryAccessibilityAnnounce(mAnimator, mSelectYear);
             break;
 		}
 	}
@@ -182,13 +182,12 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
         long millis = mCalendar.getTimeInMillis();
         mAnimator.setDateMillis(millis);
         int flags = DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NO_YEAR;
-        String monthAndDayText = DateUtils.formatDateTime(getActivity(), millis, flags);
+        String monthAndDayText = DateUtils.formatDateTime(getContext(), millis, flags);
         mMonthAndDayView.setContentDescription(monthAndDayText);
 
         if (announce) {
             flags = DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR;
-            String fullDateText = DateUtils.formatDateTime(getActivity(), millis, flags);
-            Utils.tryAccessibilityAnnounce(mAnimator, fullDateText);
+            String fullDateText = DateUtils.formatDateTime(getContext(), millis, flags);
         }
 	}
 
@@ -228,7 +227,6 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
 	}
 
 	public void onClick(View view) {
-		tryVibrate();
 		if (view.getId() == R.id.date_picker_year)
 			setCurrentView(YEAR_VIEW);
 		else if (view.getId() == R.id.date_picker_month_and_day)
@@ -237,92 +235,85 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
 
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
-		Activity activity = getActivity();
-		activity.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-		mVibrator = ((Vibrator) activity.getSystemService("vibrator"));
+		Context context = getContext();
+		mVibrator = ((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE));
 		if (bundle != null) {
 			mCalendar.set(Calendar.YEAR, bundle.getInt(KEY_SELECTED_YEAR));
 			mCalendar.set(Calendar.MONTH, bundle.getInt(KEY_SELECTED_MONTH));
 			mCalendar.set(Calendar.DAY_OF_MONTH, bundle.getInt(KEY_SELECTED_DAY));
 			mVibrate = bundle.getBoolean(KEY_VIBRATE);
 		}
-	}
 
-	public View onCreateView(LayoutInflater layoutInflater, ViewGroup parent, Bundle bundle) {
-		getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.date_picker_dialog);
 
-		View view = layoutInflater.inflate(R.layout.date_picker_dialog, null);
+        mDayOfWeekView = ((TextView) findViewById(R.id.date_picker_header));
+        mMonthAndDayView = ((LinearLayout) findViewById(R.id.date_picker_month_and_day));
+        mMonthAndDayView.setOnClickListener(this);
+        mSelectedMonthTextView = ((TextView) findViewById(R.id.date_picker_month));
+        mSelectedDayTextView = ((TextView) findViewById(R.id.date_picker_day));
+        mYearView = ((TextView) findViewById(R.id.date_picker_year));
+        mYearView.setOnClickListener(this);
 
-		mDayOfWeekView = ((TextView) view.findViewById(R.id.date_picker_header));
-		mMonthAndDayView = ((LinearLayout) view.findViewById(R.id.date_picker_month_and_day));
-		mMonthAndDayView.setOnClickListener(this);
-		mSelectedMonthTextView = ((TextView) view.findViewById(R.id.date_picker_month));
-		mSelectedDayTextView = ((TextView) view.findViewById(R.id.date_picker_day));
-		mYearView = ((TextView) view.findViewById(R.id.date_picker_year));
-		mYearView.setOnClickListener(this);
+        int listPosition = -1;
+        int currentView = MONTH_AND_DAY_VIEW;
+        int listPositionOffset = 0;
+        if (bundle != null) {
+            mWeekStart = bundle.getInt(KEY_WEEK_START);
+            mMinYear = bundle.getInt(KEY_YEAR_START);
+            mMaxYear = bundle.getInt(KEY_YEAR_END);
+            currentView = bundle.getInt(KEY_CURRENT_VIEW);
+            listPosition = bundle.getInt(KEY_LIST_POSITION);
+            listPositionOffset = bundle.getInt(KEY_LIST_POSITION_OFFSET);
+        }
 
-		int listPosition = -1;
-		int currentView = MONTH_AND_DAY_VIEW;
-		int listPositionOffset = 0;
-		if (bundle != null) {
-			mWeekStart = bundle.getInt(KEY_WEEK_START);
-			mMinYear = bundle.getInt(KEY_YEAR_START);
-			mMaxYear = bundle.getInt(KEY_YEAR_END);
-			currentView = bundle.getInt(KEY_CURRENT_VIEW);
-			listPosition = bundle.getInt(KEY_LIST_POSITION);
-			listPositionOffset = bundle.getInt(KEY_LIST_POSITION_OFFSET);
-		}
+        mDayPickerView = new DayPickerView(context, this);
+        mYearPickerView = new YearPickerView(context, this);
 
-		Activity activity = getActivity();
-		mDayPickerView = new DayPickerView(activity, this);
-		mYearPickerView = new YearPickerView(activity, this);
+        Resources resources = getContext().getResources();
+        mDayPickerDescription = resources.getString(R.string.day_picker_description);
+        mSelectDay = resources.getString(R.string.select_day);
+        mYearPickerDescription = resources.getString(R.string.year_picker_description);
+        mSelectYear = resources.getString(R.string.select_year);
 
-		Resources resources = getResources();
-		mDayPickerDescription = resources.getString(R.string.day_picker_description);
-		mSelectDay = resources.getString(R.string.select_day);
-		mYearPickerDescription = resources.getString(R.string.year_picker_description);
-		mSelectYear = resources.getString(R.string.select_year);
+        mAnimator = ((AccessibleDateAnimator) findViewById(R.id.animator));
+        mAnimator.addView(mDayPickerView);
+        mAnimator.addView(mYearPickerView);
+        mAnimator.setDateMillis(mCalendar.getTimeInMillis());
 
-		mAnimator = ((AccessibleDateAnimator) view.findViewById(R.id.animator));
-		mAnimator.addView(mDayPickerView);
-		mAnimator.addView(mYearPickerView);
-		mAnimator.setDateMillis(mCalendar.getTimeInMillis());
+        AlphaAnimation inAlphaAnimation = new AlphaAnimation(0.0F, 1.0F);
+        inAlphaAnimation.setDuration(300L);
+        mAnimator.setInAnimation(inAlphaAnimation);
 
-		AlphaAnimation inAlphaAnimation = new AlphaAnimation(0.0F, 1.0F);
-		inAlphaAnimation.setDuration(300L);
-		mAnimator.setInAnimation(inAlphaAnimation);
+        AlphaAnimation outAlphaAnimation = new AlphaAnimation(1.0F, 0.0F);
+        outAlphaAnimation.setDuration(300L);
+        mAnimator.setOutAnimation(outAlphaAnimation);
 
-		AlphaAnimation outAlphaAnimation = new AlphaAnimation(1.0F, 0.0F);
-		outAlphaAnimation.setDuration(300L);
-		mAnimator.setOutAnimation(outAlphaAnimation);
-
-		mDoneButton = ((Button) view.findViewById(R.id.done));
-		mDoneButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View view) {
+        mDoneButton = ((Button) findViewById(R.id.done));
+        mDoneButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
                 onDoneButtonClick();
-			}
-		});
+            }
+        });
 
-		updateDisplay(false);
-		setCurrentView(currentView, true);
+        updateDisplay(false);
+        setCurrentView(currentView, true);
 
-		if (listPosition != -1) {
-			if (currentView == MONTH_AND_DAY_VIEW) {
-				mDayPickerView.postSetSelection(listPosition);
-			}
-			if (currentView == YEAR_VIEW) {
-				mYearPickerView.postSetSelectionFromTop(listPosition, listPositionOffset);
-			}
-		}
-		return view;
-	}
+        if (listPosition != -1) {
+            if (currentView == MONTH_AND_DAY_VIEW) {
+                mDayPickerView.postSetSelection(listPosition);
+            }
+            if (currentView == YEAR_VIEW) {
+                mYearPickerView.postSetSelectionFromTop(listPosition, listPositionOffset);
+            }
+        }
+
+    }
 
     private void onDoneButtonClick() {
-        tryVibrate();
         if (mCallBack != null) {
             mCallBack.onDateSet(this, mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH), mCalendar.get(Calendar.DAY_OF_MONTH));
-}
-        dismiss();
+        }
+        this.dismiss();
     }
 
     public void onDayOfMonthSelected(int year, int month, int day) {
@@ -335,10 +326,12 @@ public class DatePickerDialog extends DialogFragment implements View.OnClickList
         if(mCloseOnSingleTapDay) {
             onDoneButtonClick();
         }
+
+        setCurrentView(YEAR_VIEW);
 	}
 
 	public void onSaveInstanceState(Bundle bundle) {
-		super.onSaveInstanceState(bundle);
+		super.onSaveInstanceState();
 		bundle.putInt(KEY_SELECTED_YEAR, mCalendar.get(Calendar.YEAR));
 		bundle.putInt(KEY_SELECTED_MONTH, mCalendar.get(Calendar.MONTH));
 		bundle.putInt(KEY_SELECTED_DAY, mCalendar.get(Calendar.DAY_OF_MONTH));

@@ -156,14 +156,6 @@ public class RadialSelectorView extends View {
     }
 
     /**
-     * Allows for smoother animations.
-     */
-    @Override
-    public boolean hasOverlappingRendering() {
-        return false;
-    }
-
-    /**
      * Set the multiplier for the radius. Will be used during animations to move in/out.
      */
     public void setAnimationRadiusMultiplier(float animationRadiusMultiplier) {
