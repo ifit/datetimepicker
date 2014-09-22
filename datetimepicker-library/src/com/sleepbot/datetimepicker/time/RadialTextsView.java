@@ -142,14 +142,6 @@ public class RadialTextsView extends View {
     }
 
     /**
-     * Allows for smoother animation.
-     */
-    @Override
-    public boolean hasOverlappingRendering() {
-        return false;
-    }
-
-    /**
      * Used by the animation to move the numbers in and out.
      */
     public void setAnimationRadiusMultiplier(float animationRadiusMultiplier) {

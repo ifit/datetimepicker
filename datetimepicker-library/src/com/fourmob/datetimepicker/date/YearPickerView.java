@@ -71,7 +71,6 @@ public class YearPickerView extends ListView implements AdapterView.OnItemClickL
 
 
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        mController.tryVibrate();
         TextViewWithCircularIndicator clickedView = (TextViewWithCircularIndicator) view;
         if (clickedView != null) {
             if (clickedView != mSelectedView) {

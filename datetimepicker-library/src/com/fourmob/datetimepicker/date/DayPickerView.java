@@ -111,12 +111,7 @@ public class DayPickerView extends ListView implements AbsListView.OnScrollListe
         if (position != selectedPosition || forceScroll) {
             setMonthDisplayed(mTempDay);
             mPreviousScrollState = OnScrollListener.SCROLL_STATE_FLING;
-            if (animate && Build.VERSION.SDK_INT >= 11) {
-                smoothScrollToPositionFromTop(position, LIST_TOP_OFFSET, GOTO_SCROLL_DURATION);
-                return true;
-            } else {
                 postSetSelection(position);
-            }
         } else if (setSelected) {
             setMonthDisplayed(mSelectedDay);
         }
@@ -193,14 +188,6 @@ public class DayPickerView extends ListView implements AbsListView.OnScrollListe
 		setVerticalScrollBarEnabled(false);
 		setOnScrollListener(this);
 		setFadingEdgeLength(0);
-		setFrictionIfSupported(ViewConfiguration.getScrollFriction() * mFriction);
-	}
-
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	void setFrictionIfSupported(float friction) {
-		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			setFriction(friction);
-		}
 	}
 
     protected class ScrollStateRunnable implements Runnable {

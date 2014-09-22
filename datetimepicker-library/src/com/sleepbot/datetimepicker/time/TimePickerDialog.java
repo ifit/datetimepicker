@@ -15,7 +15,6 @@ package com.sleepbot.datetimepicker.time;
  * limitations under the License
  */
 
-import android.app.ActionBar.LayoutParams;
 import android.graphics.Rect;
 import android.os.Build;
 import android.support.v4.app.DialogFragment;
@@ -208,23 +207,6 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
         mMinuteView.setOnKeyListener(keyboardListener);
         mAmPmTextView = (TextView) view.findViewById(R.id.ampm_label);
         mAmPmTextView.setOnKeyListener(keyboardListener);
-        if (Build.VERSION.SDK_INT <= 14) {
-
-            mAmPmTextView.setTransformationMethod(new TransformationMethod() {
-
-                private final Locale locale = getResources().getConfiguration().locale;
-
-                @Override
-                public CharSequence getTransformation(CharSequence source, View view) {
-                        return source != null ? source.toString().toUpperCase(locale) : null;
-                }
-
-                @Override
-                public void onFocusChanged(View view, CharSequence sourceText, boolean focused, int direction, Rect previouslyFocusedRect) {
-
-                }
-            });
-        }
         String[] amPmTexts = new DateFormatSymbols().getAmPmStrings();
         mAmText = amPmTexts[0];
         mPmText = amPmTexts[1];
@@ -271,7 +253,7 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
             mAmPmTextView.setVisibility(View.GONE);
 
             RelativeLayout.LayoutParams paramsSeparator = new RelativeLayout.LayoutParams(
-                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+                    RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
             paramsSeparator.addRule(RelativeLayout.CENTER_IN_PARENT);
             TextView separatorView = (TextView) view.findViewById(R.id.separator);
             separatorView.setLayoutParams(paramsSeparator);
@@ -331,11 +313,9 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
     private void updateAmPmDisplay(int amOrPm) {
         if (amOrPm == AM) {
             mAmPmTextView.setText(mAmText);
-            Utils.tryAccessibilityAnnounce(mTimePicker, mAmText);
             mAmPmHitspace.setContentDescription(mAmText);
         } else if (amOrPm == PM) {
             mAmPmTextView.setText(mPmText);
-            Utils.tryAccessibilityAnnounce(mTimePicker, mPmText);
             mAmPmHitspace.setContentDescription(mPmText);
         } else {
             mAmPmTextView.setText(mDoublePlaceholderText);
@@ -369,7 +349,6 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
                 setCurrentItemShowing(MINUTE_INDEX, true, true, false);
                 announcement += ". " + mSelectMinutes;
             }
-            Utils.tryAccessibilityAnnounce(mTimePicker, announcement);
         } else if (pickerIndex == MINUTE_INDEX) {
             setMinute(newValue);
             if(mCloseOnSingleTapMinute) {
@@ -400,9 +379,6 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
         CharSequence text = String.format(format, value);
         mHourView.setText(text);
         mHourSpaceView.setText(text);
-        if (announce) {
-            Utils.tryAccessibilityAnnounce(mTimePicker, text);
-        }
     }
 
     private void setMinute(int value) {
@@ -410,7 +386,6 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
             value = 0;
         }
         CharSequence text = String.format(Locale.getDefault(), "%02d", value);
-        Utils.tryAccessibilityAnnounce(mTimePicker, text);
         mMinuteView.setText(text);
         mMinuteSpaceView.setText(text);
     }
@@ -427,16 +402,10 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
                 hours = hours % 12;
             }
             mTimePicker.setContentDescription(mHourPickerDescription + ": " + hours);
-            if (announce) {
-                Utils.tryAccessibilityAnnounce(mTimePicker, mSelectHours);
-            }
             labelToAnimate = mHourView;
         } else {
             int minutes = mTimePicker.getMinutes();
             mTimePicker.setContentDescription(mMinutePickerDescription + ": " + minutes);
-            if (announce) {
-                Utils.tryAccessibilityAnnounce(mTimePicker, mSelectMinutes);
-            }
             labelToAnimate = mMinuteView;
         }
 
@@ -459,7 +428,7 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
      * @return true if the key was successfully processed, false otherwise.
      */
     private boolean processKeyUp(int keyCode) {
-        if (keyCode == KeyEvent.KEYCODE_ESCAPE || keyCode == KeyEvent.KEYCODE_BACK) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
             dismiss();
             return true;
         } else if (keyCode == KeyEvent.KEYCODE_TAB) {
@@ -494,8 +463,6 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
                     } else {
                         deletedKeyStr = String.format("%d", getValFromKeyCode(deleted));
                     }
-                    Utils.tryAccessibilityAnnounce(mTimePicker,
-                            String.format(mDeletedKeyFormat, deletedKeyStr));
                     updateDisplay(true);
                 }
             }
@@ -557,7 +524,6 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
         }
 
         int val = getValFromKeyCode(keyCode);
-        Utils.tryAccessibilityAnnounce(mTimePicker, String.format("%d", val));
         // Automatically fill in 0's if AM or PM was legally entered.
         if (isTypedTimeFullyLegal()) {
             if (!mIs24HourMode && mTypedTimes.size() <= 3) {
@@ -751,7 +717,7 @@ public class TimePickerDialog extends DialogFragment implements RadialPickerLayo
         // Cache the codes.
         if (mAmKeyCode == -1 || mPmKeyCode == -1) {
             // Find the first character in the AM/PM text that is unique.
-            KeyCharacterMap kcm = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
+            KeyCharacterMap kcm = KeyCharacterMap.load(KeyCharacterMap.BUILT_IN_KEYBOARD);
             char amChar;
             char pmChar;
             for (int i = 0; i < Math.max(mAmText.length(), mPmText.length()); i++) {

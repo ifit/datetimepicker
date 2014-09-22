@@ -91,7 +91,6 @@ public class SimpleMonthAdapter extends BaseAdapter implements SimpleMonthView.O
 	}
 
 	protected void onDayTapped(CalendarDay calendarDay) {
-		mController.tryVibrate();
 		mController.onDayOfMonthSelected(calendarDay.year, calendarDay.month, calendarDay.day);
 		setSelectedDay(calendarDay);
 	}
