@@ -36,7 +36,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
-import android.view.accessibility.AccessibilityNodeInfo;
+import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.widget.FrameLayout;
 
 import com.fourmob.datetimepicker.R;
@@ -177,7 +177,7 @@ public class RadialPickerLayout extends FrameLayout implements OnTouchListener {
             return;
         }
         mIs24HourMode = is24HourMode;
-        mHideAmPm = Utils.isTouchExplorationEnabled(mAccessibilityManager) ? true : mIs24HourMode;
+        mHideAmPm = mIs24HourMode;
 
         mVibrate = vibrate;
 
@@ -557,21 +557,12 @@ public class RadialPickerLayout extends FrameLayout implements OnTouchListener {
             mTransition.playTogether(anims);
             mTransition.start();
         } else {
-            if (Build.VERSION.SDK_INT >= 11) {
-                int hourAlpha = (index == HOUR_INDEX) ? 255 : 0;
-                int minuteAlpha = (index == MINUTE_INDEX) ? 255 : 0;
-                mHourRadialTextsView.setAlpha(hourAlpha);
-                mHourRadialSelectorView.setAlpha(hourAlpha);
-                mMinuteRadialTextsView.setAlpha(minuteAlpha);
-                mMinuteRadialSelectorView.setAlpha(minuteAlpha);
-            } else {
-                int hourVisibility = (index == HOUR_INDEX) ? View.VISIBLE : View.INVISIBLE;
-                int minuteVisibility = (index == MINUTE_INDEX) ? View.VISIBLE : View.INVISIBLE;
-                mHourRadialTextsView.setVisibility(hourVisibility);
-                mHourRadialSelectorView.setVisibility(hourVisibility);
-                mMinuteRadialTextsView.setVisibility(minuteVisibility);
-                mMinuteRadialSelectorView.setVisibility(minuteVisibility);
-            }
+            int hourVisibility = (index == HOUR_INDEX) ? View.VISIBLE : View.INVISIBLE;
+            int minuteVisibility = (index == MINUTE_INDEX) ? View.VISIBLE : View.INVISIBLE;
+            mHourRadialTextsView.setVisibility(hourVisibility);
+            mHourRadialSelectorView.setVisibility(hourVisibility);
+            mMinuteRadialTextsView.setVisibility(minuteVisibility);
+            mMinuteRadialSelectorView.setVisibility(minuteVisibility);
         }
 
     }
@@ -620,7 +611,7 @@ public class RadialPickerLayout extends FrameLayout implements OnTouchListener {
                 } else {
                     // If we're in accessibility mode, force the touch to be legal. Otherwise,
                     // it will only register within the given touch target zone.
-                    boolean forceLegal = Utils.isTouchExplorationEnabled(mAccessibilityManager);
+                    boolean forceLegal = false;
                     // Calculate the degrees that is currently being touched.
                     mDownDegrees = getDegreesFromCoords(eventX, eventY, forceLegal, isInnerCircle);
                     if (mDownDegrees != -1) {
@@ -770,18 +761,6 @@ public class RadialPickerLayout extends FrameLayout implements OnTouchListener {
     }
 
     /**
-     * Necessary for accessibility, to ensure we support "scrolling" forward and backward
-     * in the circle.
-     */
-    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
-        if (Build.VERSION.SDK_INT >= 14) {
-            super.onInitializeAccessibilityNodeInfo(info);
-            info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
-            info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD);
-        }
-    }
-
-    /**
      * Announce the currently-selected time when launched.
      */
     @Override
@@ -804,61 +783,5 @@ public class RadialPickerLayout extends FrameLayout implements OnTouchListener {
         return super.dispatchPopulateAccessibilityEvent(event);
     }
 
-    /**
-     * When scroll forward/backward events are received, jump the time to the higher/lower
-     * discrete, visible value on the circle.
-     */
-    @SuppressLint("NewApi")
-    @Override
-    public boolean performAccessibilityAction(int action, Bundle arguments) {
-        if (super.performAccessibilityAction(action, arguments)) {
-            return true;
-        }
 
-        int changeMultiplier = 0;
-        if (action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) {
-            changeMultiplier = 1;
-        } else if (action == AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) {
-            changeMultiplier = -1;
-        }
-        if (changeMultiplier != 0) {
-            int value = getCurrentlyShowingValue();
-            int stepSize = 0;
-            int currentItemShowing = getCurrentItemShowing();
-            if (currentItemShowing == HOUR_INDEX) {
-                stepSize = HOUR_VALUE_TO_DEGREES_STEP_SIZE;
-                value %= 12;
-            } else if (currentItemShowing == MINUTE_INDEX) {
-                stepSize = MINUTE_VALUE_TO_DEGREES_STEP_SIZE;
-            }
-
-            int degrees = value * stepSize;
-            degrees = snapOnly30s(degrees, changeMultiplier);
-            value = degrees / stepSize;
-            int maxValue = 0;
-            int minValue = 0;
-            if (currentItemShowing == HOUR_INDEX) {
-                if (mIs24HourMode) {
-                    maxValue = 23;
-                } else {
-                    maxValue = 12;
-                    minValue = 1;
-                }
-            } else {
-                maxValue = 55;
-            }
-            if (value > maxValue) {
-                // If we scrolled forward past the highest number, wrap around to the lowest.
-                value = minValue;
-            } else if (value < minValue) {
-                // If we scrolled backward past the lowest number, wrap around to the highest.
-                value = maxValue;
-            }
-            setItem(currentItemShowing, value);
-            mListener.onValueSelected(currentItemShowing, value, false);
-            return true;
-        }
-
-        return false;
-    }
 }
