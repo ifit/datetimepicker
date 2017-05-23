@@ -1,20 +1,13 @@
 package com.fourmob.datetimepicker.date;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.os.Vibrator;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.text.format.DateUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -58,7 +51,7 @@ public class DatePickerDialog extends Dialog implements View.OnClickListener, Da
 	private static SimpleDateFormat YEAR_FORMAT = new SimpleDateFormat("yyyy", Locale.getDefault());
     private DateFormatSymbols mDateFormatSymbols = new DateFormatSymbols();
 
-	private final Calendar mCalendar = Calendar.getInstance();
+    private final Calendar mCalendar = Calendar.getInstance();
     private HashSet<OnDateChangedListener> mListeners = new HashSet<OnDateChangedListener>();
     private OnDateSetListener mCallBack;
 
@@ -99,20 +92,6 @@ public class DatePickerDialog extends Dialog implements View.OnClickListener, Da
         if (day > daysInMonth) {
             mCalendar.set(Calendar.DAY_OF_MONTH, daysInMonth);
         }
-	}
-
-//	public static DatePickerDialog newInstance(OnDateSetListener onDateSetListener, int year, int month, int day) {
-//		return newInstance(onDateSetListener, year, month, day, true);
-//	}
-//
-//	public static DatePickerDialog newInstance(OnDateSetListener onDateSetListener, int year, int month, int day, boolean vibrate) {
-//		DatePickerDialog datePickerDialog = new DatePickerDialog();
-//		datePickerDialog.initialize(onDateSetListener, year, month, day, vibrate);
-//		return datePickerDialog;
-//	}
-
-    public void setVibrate(boolean vibrate) {
-		mVibrate = vibrate;
 	}
 
 	private void setCurrentView(int currentView) {
@@ -170,10 +149,10 @@ public class DatePickerDialog extends Dialog implements View.OnClickListener, Da
 
         if (this.mDayOfWeekView != null){
             this.mCalendar.setFirstDayOfWeek(mWeekStart);
-            this.mDayOfWeekView.setText(mDateFormatSymbols.getWeekdays()[this.mCalendar.get(Calendar.DAY_OF_WEEK)].toUpperCase(Locale.getDefault()));
+            this.mDayOfWeekView.setText(getDay(mDateFormatSymbols.getWeekdays()[this.mCalendar.get(Calendar.DAY_OF_WEEK)]));
         }
 
-        this.mSelectedMonthTextView.setText(mDateFormatSymbols.getMonths()[this.mCalendar.get(Calendar.MONTH)].toUpperCase(Locale.getDefault()));
+        this.mSelectedMonthTextView.setText(getMonth(mDateFormatSymbols.getMonths()[this.mCalendar.get(Calendar.MONTH)]));
 
         mSelectedDayTextView.setText(DAY_FORMAT.format(mCalendar.getTime()));
         mYearView.setText(YEAR_FORMAT.format(mCalendar.getTime()));
@@ -184,11 +163,6 @@ public class DatePickerDialog extends Dialog implements View.OnClickListener, Da
         int flags = DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NO_YEAR;
         String monthAndDayText = DateUtils.formatDateTime(getContext(), millis, flags);
         mMonthAndDayView.setContentDescription(monthAndDayText);
-
-        if (announce) {
-            flags = DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR;
-            String fullDateText = DateUtils.formatDateTime(getContext(), millis, flags);
-        }
 	}
 
 	private void updatePickers() {
@@ -197,6 +171,98 @@ public class DatePickerDialog extends Dialog implements View.OnClickListener, Da
             iterator.next().onDateChanged();
         }
 	}
+
+    private String getMonth(String month) {
+
+        String s;
+
+        try {
+            int m = Integer.parseInt(month);
+            switch (m) {
+                case 1:
+                    s = "January";
+                    break;
+                case 2:
+                    s = "February";
+                    break;
+                case 3:
+                    s = "March";
+                    break;
+                case 4:
+                    s = "April";
+                    break;
+                case 5:
+                    s = "May";
+                    break;
+                case 6:
+                    s = "June";
+                    break;
+                case 7:
+                    s = "July";
+                    break;
+                case 8:
+                    s = "August";
+                    break;
+                case 9:
+                    s = "September";
+                    break;
+                case 10:
+                    s = "October";
+                    break;
+                case 11:
+                    s = "November";
+                    break;
+                case 12:
+                    s = "December";
+                    break;
+                default:
+                    s = "January";
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            return month;
+        }
+        return s;
+    }
+
+    private String getDay(String day) {
+
+        String s;
+        try {
+            int d = Integer.parseInt(day);
+
+            switch (d) {
+                case 1:
+                    s = "Monday";
+                    break;
+                case 2:
+                    s = "Tuesday";
+                    break;
+                case 3:
+                    s = "Wednesday";
+                    break;
+                case 4:
+                    s = "Thursday";
+                    break;
+                case 5:
+                    s = "Friday";
+                    break;
+                case 6:
+                    s = "Saturday";
+                    break;
+                case 7:
+                    s = "Sunday";
+                    break;
+                default:
+                    s = "Sunday";
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            return day;
+        }
+
+        return s;
+    }
 
 	public int getFirstDayOfWeek() {
 		return mWeekStart;
